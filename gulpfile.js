@@ -2,6 +2,7 @@
 
 var gulp   = require('gulp');
 var plugins = require('gulp-load-plugins')();
+var eslint = require('gulp-eslint');
 
 var paths = {
   lint: ['./gulpfile.js', './lib/**/*.js'],
@@ -18,12 +19,15 @@ if (process.env.CI) {
   };
 }
 
-gulp.task('lint', function () {
-  return gulp.src(paths.lint)
-    .pipe(plugins.jshint('.jshintrc'))
-    .pipe(plugins.plumber(plumberConf))
-    .pipe(plugins.jscs())
-    .pipe(plugins.jshint.reporter('jshint-stylish'));
+// ********* Babel Ecmascript linting
+gulp.task('lint', /*['clean'], */ function() {
+  return gulp
+    .src([
+      'app/**/*.{js,es}',
+      'lib/**/*.{js,es}'
+    ])
+    .pipe(eslint('./.eslintrc'))
+    .pipe(eslint.format());
 });
 
 gulp.task('istanbul', function (cb) {
@@ -52,6 +56,12 @@ gulp.task('bump', ['test'], function () {
 
 gulp.task('watch', ['test'], function () {
   gulp.watch(paths.watch, ['test']);
+});
+
+gulp.on('stop', function () {
+  process.nextTick(function () {
+    process.exit(0);
+  });
 });
 
 gulp.task('test', ['lint', 'istanbul']);
