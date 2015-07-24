@@ -1,40 +1,525 @@
-'use strict';
-
 var tpmongo = require('../');
 var should = require('should');
 var Q = require('q');
+var _ = require('lodash');
+var massInsertCount = 1000;
+
 describe('tpmongo', function () {
 
   //setup 
   var mongoCollections = ['tempCollection'];
   var db = tpmongo('localhost/mongoTestDb', mongoCollections);
+
   var testObjectId = db.ObjectId('95addf649ce171641a34281e');
+  var testStartDate = new Date('2015-07-21 15:16:00.599Z');
+  var testEndDate = new Date('2099-07-21 15:16:00.599Z');
+  var testMiddleDate = new Date('2015-07-22 15:16:00.599Z');
 
   var setupDocuments = function() {
-    var doc1 = {a: 1, _current: 1, _id: db.ObjectId('55addf649ce171641a34281d'), _rId: db.ObjectId('55addf649ce171641a34281d'), _startDate: new Date('2015-07-21 15:16:00.599Z'), _endDate: new Date('2099-07-21 15:16:00.599Z')};
-    var doc2 = {a: 1, b:2, _current: 1, _id: db.ObjectId('55addf649ce171641a34281e'), _rId: db.ObjectId('55addf649ce171641a34281e'), _startDate: new Date('2015-07-21 15:16:00.599Z'), _endDate: new Date('2099-07-21 15:16:00.599Z')};
-    var doc3 = {a: 1, b:3, _current: 1, _id: db.ObjectId('95addf649ce171641a34281e'), _rId: db.ObjectId('95addf649ce171641a34281e'), _startDate: new Date('2015-07-21 15:16:00.599Z'), _endDate: new Date('2099-07-21 15:16:00.599Z')};
+    var doc1 = {a: 1, c:1, _current: 1, _id: db.ObjectId('55addf649ce171641a34281d'), _rId: db.ObjectId('55addf649ce171641a34281d'), _startDate: testStartDate, _endDate: testEndDate};
+    var doc2 = {a: 1, b:2, c:2, _current: 1, _id: db.ObjectId('55addf649ce171641a34281e'), _rId: db.ObjectId('55addf649ce171641a34281e'), _startDate: testStartDate, _endDate: testEndDate};
+    var doc3 = {a: 1, b:3, c:2, _current: 1, _id: db.ObjectId('95addf649ce171641a34281e'), _rId: db.ObjectId('95addf649ce171641a34281e'), _startDate: testStartDate, _endDate: testEndDate};
 
-    return db.tempCollection.removeRaw({})
+    return db.tempCollection.removeRaw({}, {w: 'majority'})
     .then(function() {
-      return db.tempCollection.insert(doc1);
+      return db.tempCollection.insertRaw(doc1);
     })
     .then(function() {
-      return db.tempCollection.insert(doc2);
+      return db.tempCollection.insertRaw(doc2);
     })
     .then(function() {
-      return db.tempCollection.insert(doc3);
+      return db.tempCollection.insertRaw(doc3);
     })
     .then(function() {
       return Q.delay(50);
     });
-  }
+  };
+
+  var massInsertTest = function() {  
+    var docs = [];
+    for(var i = 0; i < massInsertCount; i++) {
+      docs.push({a:1});
+    }
+    return db.tempCollection.removeRaw({}, {w: 'majority'})
+    .then(function() {
+      return db.tempCollection.insertRaw(docs, {w: 'majority'});
+    });
+  };
+
+  it('temporlize works', function () {
+    var actionWorked = false;
+    return massInsertTest()
+    .then(function() {
+      return db.tempCollection.temporalize();
+    })
+    .then(function() {
+      actionWorked = true;
+    })
+    .catch(function(err) {
+      console.log('Error: ');
+      console.log(err);
+    })
+    .finally(function() {
+      actionWorked.should.equal(true);
+    });
+  });
+
+  it('retemporlize should not work', function () {
+    var actionWorked = false;
+    return massInsertTest()
+    .then(function() {
+      return db.tempCollection.temporalize();
+    })
+    .then(function() {
+      return db.tempCollection.temporalize();
+    })
+    .then(function() {
+      actionWorked = true;
+    })
+    .catch(function() {
+      //this should actually happen for this test
+    })
+    .finally(function() {
+      actionWorked.should.equal(false);
+    });
+  });
+
+  it('ensureIndexes works', function () {
+    var actionWorked = false;
+    return massInsertTest()
+    .then(function() {
+      return db.tempCollection.ensureIndexes();
+    })
+    .then(function() {
+      actionWorked = true;
+    })
+    .catch(function(err) {
+      console.log('Error: ');
+      console.log(err);
+    })
+    .finally(function() {
+      actionWorked.should.equal(true);
+    });
+  });
+
+  it('cleanLocks should kill all tran fields', function () {
+    var badDocCount = 1;
+    return massInsertTest()
+    .then(function() {
+      return db.tempCollection.cleanLocks();
+    })
+    .then(function() {
+      return db.tempCollection.countRaw({$or: [{_tranIds: {$exists: true}}, {_current: {$eq: -1}}, {_locked: {$exists: true}}]});
+    })
+    .then(function(result) {
+      badDocCount = result;
+    })
+    .catch(function(err) {
+      console.log('Error: ');
+      console.log(err);
+    })
+    .finally(function() {
+      badDocCount.should.be.exactly(0);
+    });
+  });
 
   it('tpmongo should be object', function () {
 		(typeof db).should.equal('object');
   });
 
+  it('mass insertRaw works', function () {
+    var docCount = 0;
+    return massInsertTest()
+    .then(function() {
+      return db.tempCollection.countRaw({});
+    })
+    .then(function(theCount) {
+      docCount = theCount;
+    })    
+    .catch(function(err) {
+      console.log('Error: ');
+      console.log(err);
+    })
+    .finally(function() {
+      docCount.should.be.exactly(massInsertCount);
+    });
+  });
+
+  it('count after update should work', function () {
+    var docCount = 0;
+
+    return setupDocuments()
+    .then(function() {
+      return db.tempCollection.update({a: 1}, {$set: {c: 4}}, {multi: true});
+    })
+    .then(function() {
+      return db.tempCollection.count({});
+    })
+    .then(function(theCount) {
+      docCount = theCount;
+    })  
+    .catch(function(err) {
+      console.log('Error: ');
+      console.log(err);
+    })
+    .finally(function() {
+      docCount.should.be.exactly(3);
+    });
+  });
+
+  it('count by date should work', function () {
+    var docCount = 0;
+
+    return setupDocuments()
+    .then(function() {
+      return db.tempCollection.update({a: 1}, {$set: {c: 4}}, {multi: true});
+    })
+    .then(function() {
+      return db.tempCollection.countByDate({}, testMiddleDate);
+    })
+    .then(function(theCount) {
+      docCount = theCount;
+    })  
+    .catch(function(err) {
+      console.log('Error: ');
+      console.log(err);
+    })
+    .finally(function() {
+      docCount.should.be.exactly(3);
+    });
+  });
+
+  it('distinct after update should work', function () {
+    var distinctValueCount = 0;
+
+    return setupDocuments()
+    .then(function() {
+      return db.tempCollection.update({a: 1}, {$set: {c: 4}}, {multi: true});
+    })
+    .then(function() {
+      return db.tempCollection.distinct('b', {a: 1});
+    })
+    .then(function(distinctValues) {
+      distinctValueCount = distinctValues.length;
+    })  
+    .catch(function(err) {
+      console.log('Error: ');
+      console.log(err);
+    })
+    .finally(function() {
+      distinctValueCount.should.be.exactly(2);
+    });
+  });
+
+  it('distinct by date should work', function () {
+    var distinctValueCount = 0;
+
+    return setupDocuments()
+    .then(function() {
+      return db.tempCollection.update({a: 1}, {$set: {b: 4}}, {multi: true});
+    })
+    .then(function() {
+      return db.tempCollection.distinctByDate('b', {a: 1}, testMiddleDate);
+    })
+    .then(function(distinctValues) {
+      distinctValueCount = distinctValues.length;
+    })  
+    .catch(function(err) {
+      console.log('Error: ');
+      console.log(err);
+    })
+    .finally(function() {
+      distinctValueCount.should.be.exactly(2);
+    });
+  });
+
+  var testMapping = function() {
+    emit(this.c, this.b);
+  };
+
+  var testReduce = function(keyA, bValues) {
+    return Array.sum(bValues);
+  };
+
+  it('mapReduce should work', function () {
+    var mapReduceReturnValue = 0;
+
+    return setupDocuments()
+    .then(function() {
+      return db.tempCollection.update({a: 1}, {$set: {b: 4}}, {multi: true});
+    })
+    .then(function() {
+      return db.tempCollection.mapReduce(testMapping, testReduce, {out: {inline: 1}, query: {a:1}});
+    })
+    .then(function(result) {
+      for(var resultIter = 0; resultIter < result.length; resultIter++) {
+        mapReduceReturnValue += result[resultIter].value;
+      }
+    })  
+    .catch(function(err) {
+      console.log('Error: ');
+      console.log(err);
+    })
+    .finally(function() {
+      mapReduceReturnValue.should.be.exactly(12);
+    });
+  });
+
+  it('mapReduce by date should work', function () {
+    var mapReduceReturnValue = 0;
+
+    return setupDocuments()
+    .then(function() {
+      return db.tempCollection.mapReduceByDate(testMapping, testReduce, {out: {inline: 1}, query: {a:1}}, testMiddleDate);
+    })
+    .then(function(result) {
+      for(var resultIter = 0; resultIter < result.length; resultIter++) {
+        mapReduceReturnValue += result[resultIter].value || 0;
+      }
+    })  
+    .catch(function(err) {
+      console.log('Error: ');
+      console.log(err);
+    })
+    .finally(function() {
+      mapReduceReturnValue.should.be.exactly(5);
+    });
+  });
+
+  it('aggregate should work', function () {
+    var aggregateTotal = 0;
+
+    return setupDocuments()
+    .then(function() {
+      return db.tempCollection.update({a: 1}, {$set: {b: 4}}, {multi: true});
+    })
+    .then(function() {
+      return db.tempCollection.aggregate({}, {$group: {_id: '$a', total: {$sum: '$b'}}});
+    })
+    .then(function(result) {
+      for(var resultIter = 0; resultIter < result.length; resultIter++) {
+        aggregateTotal += result[resultIter].total;
+      }
+    })  
+    .catch(function(err) {
+      console.log('Error: ');
+      console.log(err);
+    })
+    .finally(function() {
+      aggregateTotal.should.be.exactly(12);
+    });
+  });
+
+  it('aggregate by date should work', function () {
+    var aggregateTotal = 0;
+
+    return setupDocuments()
+    .then(function() {
+      return db.tempCollection.update({a: 1}, {$set: {b: 4}}, {multi: true});
+    })
+    .then(function() {
+      return db.tempCollection.aggregateByDate({}, {$group: {_id: '$a', total: {$sum: '$b'}}}, testMiddleDate);
+    })
+    .then(function(result) {
+      for(var resultIter = 0; resultIter < result.length; resultIter++) {
+        aggregateTotal += result[resultIter].total;
+      }
+    })  
+    .catch(function(err) {
+      console.log('Error: ');
+      console.log(err);
+    })
+    .finally(function() {
+      aggregateTotal.should.be.exactly(5);
+    });
+  });
+
+  it('api consistency - find', function () {
+    var tpMongoResult = {};
+    var pMongoResult = {};
+
+    return setupDocuments()
+    .then(function() {
+      return db.tempCollection.update({a: 1}, {$set: {b: 4}}, {multi: true});
+    })
+    .then(function() {
+      return db.tempCollection.find({a: 1}).toArray();
+    })
+    .then(function(result) {
+      tpMongoResult = result;
+      return db.tempCollection.findRaw({_current: 1, a: 1}).toArray();
+    })
+    .then(function(result) {
+      pMongoResult = result;
+    })  
+    .catch(function(err) {
+      console.log('Error: ');
+      console.log(err);
+    })
+    .finally(function() {
+      should.deepEqual(tpMongoResult, pMongoResult);
+    });
+  });
+
+  it('api consistency - findOne', function () {
+    var tpMongoResult = {};
+    var pMongoResult = {};
+
+    return setupDocuments()
+    .then(function() {
+      return db.tempCollection.update({a: 1}, {$set: {b: 4}}, {multi: true});
+    })
+    .then(function() {
+      return db.tempCollection.findOne({b: 3});
+    })
+    .then(function(result) {
+      tpMongoResult = result;
+      return db.tempCollection.findOneRaw({_current: 1, b: 3});
+    })
+    .then(function(result) {
+      pMongoResult = result;
+    })  
+    .catch(function(err) {
+      console.log('Error: ');
+      console.log(err);
+    })
+    .finally(function() {
+      should.deepEqual(tpMongoResult, pMongoResult);
+    });
+  });
+
+  it('api consistency - findAndModify', function () {
+    var tpMongoResult = {};
+    var pMongoResult = {};
+
+    return setupDocuments()
+    .then(function() {
+      return db.tempCollection.findAndModify({query: {b: 3}, update: {$set: {anotherProperty: 2}}});
+    })
+    .then(function(result) {
+      tpMongoResult = result;
+      tpMongoResult[0] = _.pick(tpMongoResult[0], ['a','b','c']);
+      tpMongoResult[1].value = _.pick(tpMongoResult[1].value, ['a','b','c']);
+      tpMongoResult[1] = _.pick(tpMongoResult[1], ['lastErrorObject','ok','value']);
+      return db.tempCollection.findAndModifyRaw({query: {_current: 1, b: 3}, update: {$set: {anotherProperty: 2}}});
+    })
+    .then(function(result) {
+      pMongoResult = result;
+      pMongoResult[0] = _.pick(pMongoResult[0], ['a','b','c']);
+      pMongoResult[1].value = _.pick(pMongoResult[1].value, ['a','b','c']);
+      pMongoResult[1] = _.pick(pMongoResult[1], ['lastErrorObject','ok','value']);
+    })  
+    .catch(function(err) {
+      console.log('Error: ');
+      console.log(err);
+    })
+    .finally(function() {
+      should.deepEqual(tpMongoResult, pMongoResult);
+    });
+  });
+
+it('api consistency - update', function () {
+    var tpMongoResult = {};
+    var pMongoResult = {};
+
+    return setupDocuments()
+    .then(function() {
+      return db.tempCollection.update({a: 1}, {$set: {b: 4}}, {multi: true});
+    })
+    .then(function(result) {
+      tpMongoResult = result;
+      
+      return db.tempCollection.updateRaw({_current: 1, a: 1}, {$set: {b: 4}}, {multi: true});
+    })
+    .then(function(result) {
+      pMongoResult = result;
+    })  
+    .catch(function(err) {
+      console.log('Error: ');
+      console.log(err);
+    })
+    .finally(function() {
+      should.deepEqual(tpMongoResult, pMongoResult);
+    });
+  });
+
+it('api consistency - remove', function () {
+    var tpMongoResult = {};
+    var pMongoResult = {};
+
+    return setupDocuments()
+    .then(function() {
+      return db.tempCollection.remove({a: 1});
+    })
+    .then(function(result) {
+      tpMongoResult = result;
+      return setupDocuments();
+    })
+    .then(function() {
+      return db.tempCollection.removeRaw({_current: 1, a: 1});
+    }) 
+    .then(function(result) {
+      pMongoResult = result;
+    })  
+    .catch(function(err) {
+      console.log('Error: ');
+      console.log(err);
+    })
+    .finally(function() {
+      should.deepEqual(tpMongoResult, pMongoResult);
+    });
+  });
+
+  it('initialize works', function () {
+    var docCount = 0;
+    var initializedCount = 0;
+    var initializationComplete = false;
+    return massInsertTest()
+    .then(function() {
+      return db.tempCollection.countRaw({});
+    })
+    .then(function(theCount) {
+      docCount = theCount;
+    })
+    .then(function(theCount) {
+      return db.tempCollection.countRaw({_rId: {$exists: true}});
+    })
+    .then(function(alreadyInitializedCount) {
+      initializedCount = alreadyInitializedCount;
+
+      if(initializedCount < 0) {
+
+      }
+    })
+    .catch(function(err) {
+      console.log('Error: ');
+      console.log(err);
+    })
+    .finally(function() {
+      docCount.should.be.exactly(massInsertCount);
+    });
+  });
+
   it('count should be 3 after inserts', function () {
+    var docCount = 0;
+
+    return setupDocuments()
+    .then(function() {
+      return db.tempCollection.count({});
+    })
+    .then(function(theCount) {
+      docCount = theCount;
+    })
+    .catch(function(err) {
+      console.log('Error: ');
+      console.log(err);
+    })
+    .finally(function() {
+      docCount.should.be.exactly(3);
+    });
+  });
+
+  it('aggregate works', function () {
     var docCount = 0;
 
     return setupDocuments()
@@ -297,10 +782,10 @@ describe('tpmongo', function () {
       var query = {'tempProperty': tempValue};
       var queryMultiple = {'sameValue': 1};
       var update = {$set: {'anotherProperty': 1}};
-      var numberOfUpdatesToTest = 3;
+      var numberOfUpdatesToTest = 5;
 
       var insertPromises = [];
-      for(var j = 0; j < 10; j++)
+      for(var j = 0; j < 100; j++)
       {
         insertPromises.push(db.tempCollection.insert({'tempProperty': tempValue, 'sameValue': 1}, {writeConcern: 'majority'}));
         insertPromises.push(db.tempCollection.insert({'tempProperty': tempValue, 'sameValue': 3, doc2val:2}, {writeConcern: 'majority'}));

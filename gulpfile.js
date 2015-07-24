@@ -37,7 +37,7 @@ gulp.task('istanbul', function (cb) {
     .on('finish', function () {
       gulp.src(paths.tests)
         .pipe(plugins.plumber(plumberConf))
-        .pipe(plugins.mocha())
+        .pipe(plugins.mocha({timeout: 10000}))
         .pipe(plugins.istanbul.writeReports()) // Creating the reports after tests runned
         .on('finish', function() {
           process.chdir(__dirname);
