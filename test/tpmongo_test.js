@@ -46,6 +46,11 @@ describe('tpmongo', function () {
     });
   };
 
+  it('should maintain API consistent w/promised-mongo', function() {
+    should(db.collection(mongoCollections[0]) instanceof tpmongo.TemporalCollection).equal(true);
+    should.exist(tpmongo.ObjectId);
+  });
+
   it('temporlize works', function () {
     var actionWorked = false;
     return massInsertTest()

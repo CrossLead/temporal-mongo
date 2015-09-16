@@ -1,7 +1,7 @@
 {
   "name": "tpmongo",
   "description": "temporal-mongo",
-  "version": "0.0.0",
+  "version": "0.0.1",
   "homepage": "https://github.com/mcgrit/tpmongo",
   "bugs": "https://github.com/mcgrit/tpmongo/issues",
   "license": "MIT",
@@ -16,7 +16,7 @@
   "keywords": [],
   "dependencies": {
     "lodash": "^3.10.0",
-    "promised-mongo": "^0.11.1",
+    "promised-mongo": "https://github.com/gordonmleigh/promised-mongo/tarball/v0.11.5",
     "q": "1.4.1"
   },
   "devDependencies": {
@@ -31,7 +31,7 @@
     "jshint-stylish": "^0.4.0",
     "gulp-load-plugins": "^0.6.0",
     "gulp-plumber": "^0.6.5",
-	"gulp-eslint": "^0.13.2"
+    "gulp-eslint": "^0.13.2"
   },
   "scripts": {
     "test": "gulp test"
