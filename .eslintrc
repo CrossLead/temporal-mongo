@@ -48,6 +48,7 @@
 		"no-new" : 0,
 		"no-constant-condition" : 0,
 		"no-alert" : 0,
-		"handle-callback-err" : 0
+		"handle-callback-err" : 0,
+		"no-console" : 0
     }
 }
