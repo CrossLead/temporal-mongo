@@ -7,12 +7,13 @@ var massInsertCount = 1000;
 describe('tpmongo', function () {
 
   //setup 
+  var maxDate = new Date('2099-07-21 15:16:00.599Z');
   var mongoCollections = ['tempCollection'];
-  var db = tpmongo('localhost/mongoTestDb', mongoCollections);
+  var db = tpmongo('localhost/mongoTestDb', mongoCollections, { _maxDate: maxDate });
 
   var testObjectId = db.ObjectId('95addf649ce171641a34281e');
   var testStartDate = new Date('2015-07-21 15:16:00.599Z');
-  var testEndDate = new Date('2099-07-21 15:16:00.599Z');
+  var testEndDate = maxDate;
   var testMiddleDate = new Date('2015-07-22 15:16:00.599Z');
 
   var setupDocuments = function() {
@@ -114,7 +115,7 @@ describe('tpmongo', function () {
       return db.tempCollection.cleanLocks();
     })
     .then(function() {
-      return db.tempCollection.countRaw({$or: [{_tranIds: {$exists: true}}, {_current: {$eq: -1}}, {_locked: {$exists: true}}]});
+      return db.tempCollection.countRaw({$or: [{_tranIds: {$exists: true}}, {_current: {$eq: 2}}, {_locked: {$exists: true}}]});
     })
     .then(function(result) {
       badDocCount = result;
