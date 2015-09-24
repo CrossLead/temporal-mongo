@@ -1,6 +1,5 @@
-coverage/
 node_modules/
 temp/npm-debug.log
+coverage/
 .DS_Store
 .idea
-/dist

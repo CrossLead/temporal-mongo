@@ -1,17 +1,21 @@
-'use strict';
+import gulp from 'gulp';
+import babel from 'gulp-babel';
+import loadPlugins from 'gulp-load-plugins';
+import sourcemaps from 'gulp-sourcemaps';
+import eslint from 'gulp-eslint';
 
-var gulp   = require('gulp');
-var plugins = require('gulp-load-plugins')();
-var eslint = require('gulp-eslint');
+const plugins = loadPlugins();
 
-var paths = {
-  lint: ['./gulpfile.js', './lib/**/*.js'],
-  watch: ['./gulpfile.js', './lib/**', './test/**/*.js', '!test/{temp,temp/**}'],
+const paths = {
+  lint: ['./gulpfile.babel.js', './lib/**/*.js'],
+  watch: ['./gulpfile.babel.js', './lib/**', './test/**/*.js', '!test/{temp,temp/**}'],
   tests: ['./test/**/*.js', '!test/{temp,temp/**}'],
-  source: ['./lib/*.js']
+  source: ['./lib/*.js'],
+  compileSource: ['./lib/**/*.js'],
+  dist: ['./dist/**/*.js']
 };
 
-var plumberConf = {};
+const plumberConf = {};
 
 if (process.env.CI) {
   plumberConf.errorHandler = function(err) {
@@ -19,18 +23,24 @@ if (process.env.CI) {
   };
 }
 
-// ********* Babel Ecmascript linting
-gulp.task('lint', /*['clean'], */ function() {
+gulp.task('compile', () => {
   return gulp
-    .src([
-      'app/**/*.{js,es}',
-      'lib/**/*.{js,es}'
-    ])
+    .src(paths.compileSource)
+    .pipe(sourcemaps.init())
+    .pipe(babel())
+    .pipe(sourcemaps.write('.'))
+    .pipe(gulp.dest('./dist/'));
+});
+
+// ********* Babel Ecmascript linting
+gulp.task('eslint', () => {
+  return gulp
+    .src(paths.lint)
     .pipe(eslint('./.eslintrc'))
     .pipe(eslint.format());
 });
 
-gulp.task('istanbul', function (cb) {
+gulp.task('istanbul', ['compile'], cb => {
   gulp.src(paths.source)
     .pipe(plugins.istanbul()) // Covering files
     .pipe(plugins.istanbul.hookRequire()) // Force `require` to return covered files
@@ -46,7 +56,7 @@ gulp.task('istanbul', function (cb) {
     });
 });
 
-gulp.task('bump', ['test'], function () {
+gulp.task('bump', ['test'], () => {
   var bumpType = plugins.util.env.type || 'patch'; // major.minor.patch
 
   return gulp.src(['./package.json'])
@@ -54,7 +64,7 @@ gulp.task('bump', ['test'], function () {
     .pipe(gulp.dest('./'));
 });
 
-gulp.task('watch', ['test'], function () {
+gulp.task('watch', ['test'], () => {
   gulp.watch(paths.watch, ['test']);
 });
 
@@ -64,7 +74,7 @@ gulp.on('stop', function () {
   });
 });
 
-gulp.task('test', ['lint', 'istanbul']);
+gulp.task('test', ['eslint', 'istanbul']);
 
 gulp.task('release', ['bump']);
 
