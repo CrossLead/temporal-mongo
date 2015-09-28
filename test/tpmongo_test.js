@@ -703,61 +703,39 @@ it('api consistency - remove', function () {
     });
   });
 
-  it('save with id should work', function () {
-    var actionWorked = false;
-
+  it('save with _rId should work', function () {
     return setupDocuments()
-    .then(function() {
-      return db.tempCollection.save({_id: testObjectId, d: 4}, {upsert:true});
-    })
-    .then(function(saveResult) {
-      actionWorked = true;
-    })
-    .catch(function(err) {
-      console.log('Error: ');
-      console.log(err);
-    })
-    .finally(function() {
-      actionWorked.should.equal(true);
-    });
+      .then(function() {
+        return db.tempCollection.save({_rId: testObjectId, d: 4}, {upsert:true});
+      })
+      .then(function(saveResult) {
+        // WriteResult should just be metadata for an update
+        saveResult.updatedExisting.should.equal(true);
+      });
   });
 
-  it('save with unknown id should work', function () {
-    var actionWorked = false;
-
+  it('save with unknown _rId should work', function () {
     return setupDocuments()
-    .then(function() {
-      return db.tempCollection.save({_id: testObjectId, d: 5}, {upsert:true});
-    })
-    .then(function(saveResult) {
-      actionWorked = true;
-    })
-    .catch(function(err) {
-      console.log('Error: ');
-      console.log(err);
-    })
-    .finally(function() {
-      actionWorked.should.equal(true);
-    });
+      .then(function() {
+        return db.tempCollection.save({_rId: db.ObjectId(), d: 5}, {upsert:true});
+      })
+      .then(function(saveResult) {
+        // WriteResult should be the document for an insert
+        should.exist(saveResult._rId);
+        saveResult.d.should.equal(5);
+      });
   });
 
-  it('save with NO id should work', function () {
-    var actionWorked = false;
-
+  it('save with NO _rId should work', function () {
     return setupDocuments()
-    .then(function() {
-      return db.tempCollection.save({d: 6}, {upsert:true});
-    })
-    .then(function(saveResult) {
-      actionWorked = true;
-    })
-    .catch(function(err) {
-      console.log('Error: ');
-      console.log(err);
-    })
-    .finally(function() {
-      actionWorked.should.equal(true);
-    });
+      .then(function() {
+        return db.tempCollection.save({d: 6}, {upsert:true});
+      })
+      .then(function(saveResult) {
+        // WriteResult should be the document for an insert
+        should.exist(saveResult._rId);
+        saveResult.d.should.equal(6);
+      });
   });
 
   it('remove should work', function () {
