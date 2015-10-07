@@ -2,16 +2,16 @@
   "name": "tpmongo",
   "description": "temporal-mongo",
   "version": "0.0.1",
-  "homepage": "https://github.com/mcgrit/tpmongo",
-  "bugs": "https://github.com/mcgrit/tpmongo/issues",
-  "license": "MIT",
+  "homepage": "https://github.com/CrossLead/temporal-mongo",
+  "bugs": "https://github.com/CrossLead/temporal-mongo/issues",
+  "license": "Apache 2",
   "main": "dist/tpmongo.js",
   "author": {
     "name": "Ryan McGregor"
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/mcgrit/tpmongo"
+    "url": "https://github.com/CrossLead/temporal-mongo"
   },
   "keywords": [],
   "dependencies": {

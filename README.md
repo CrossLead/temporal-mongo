@@ -30,7 +30,7 @@ In lieu of a formal styleguide, take care to maintain the existing coding style.
 
 ## License
 
-Copyright (c) 2015 Ryan McGregor. Licensed under the MIT license.
+Copyright (c) 2015 McChrystal Group. Licensed under the Apache license.
 
 
 
