@@ -21,8 +21,6 @@ before_script:
   - sleep 20
   - mongo --eval 'rs.initiate()'
   - sleep 15
-notifications:
-  slack: 'mcchrystalgroup:EIED2QRuvpYDmPZSwmVfnlIg#team-c3-github'
 cache:
   directories:
     - node_modules
