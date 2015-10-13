@@ -17,11 +17,11 @@ before_script:
   - sleep 15
 before_script:
   - echo "replSet = myReplSetName" | sudo tee -a /etc/mongodb.conf
+  - sudo sh ./scripts/addAdmin
   - sudo service mongodb restart
   - sleep 20
   - mongo --eval 'rs.initiate()'
   - sleep 15
-  - sh ./scripts/addAdmin
 cache:
   directories:
     - node_modules
