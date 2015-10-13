@@ -21,6 +21,7 @@ before_script:
   - sleep 20
   - mongo --eval 'rs.initiate()'
   - sleep 15
+  - mongo tpmongoTestDb --eval 'db.createUser({user: "admin", pwd: "password", roles: [ { role: "root", db: "admin" } ]})';
 cache:
   directories:
     - node_modules

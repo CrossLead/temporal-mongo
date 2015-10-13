@@ -6,10 +6,10 @@ var massInsertCount = 1000;
 
 describe('tpmongo', function () {
 
-  //setup 
+  //setup
   var maxDate = new Date('2099-07-21 15:16:00.599Z');
   var mongoCollections = ['tempCollection'];
-  var db = tpmongo('localhost/mongoTestDb', mongoCollections, { _maxDate: maxDate });
+  var db = tpmongo('localhost/tpmongoTestDb', mongoCollections, { _maxDate: maxDate });
 
   var testObjectId = db.ObjectId('5609b87d282d4aac260fcb9f');
   var testStartDate = new Date('2015-07-21 15:16:00.599Z');
@@ -36,7 +36,7 @@ describe('tpmongo', function () {
     });
   };
 
-  var massInsertTest = function() {  
+  var massInsertTest = function() {
     var docs = [];
     for(var i = 0; i < massInsertCount; i++) {
       docs.push({a:1});
@@ -141,7 +141,7 @@ describe('tpmongo', function () {
     })
     .then(function(theCount) {
       docCount = theCount;
-    })    
+    })
     .catch(function(err) {
       console.log('Error: ');
       console.log(err);
@@ -163,7 +163,7 @@ describe('tpmongo', function () {
     })
     .then(function(theCount) {
       docCount = theCount;
-    })  
+    })
     .catch(function(err) {
       console.log('Error: ');
       console.log(err);
@@ -185,7 +185,7 @@ describe('tpmongo', function () {
     })
     .then(function(theCount) {
       docCount = theCount;
-    })  
+    })
     .catch(function(err) {
       console.log('Error: ');
       console.log(err);
@@ -207,7 +207,7 @@ describe('tpmongo', function () {
     })
     .then(function(distinctValues) {
       distinctValueCount = distinctValues.length;
-    })  
+    })
     .catch(function(err) {
       console.log('Error: ');
       console.log(err);
@@ -229,7 +229,7 @@ describe('tpmongo', function () {
     })
     .then(function(distinctValues) {
       distinctValueCount = distinctValues.length;
-    })  
+    })
     .catch(function(err) {
       console.log('Error: ');
       console.log(err);
@@ -261,7 +261,7 @@ describe('tpmongo', function () {
       for(var resultIter = 0; resultIter < result.length; resultIter++) {
         mapReduceReturnValue += result[resultIter].value;
       }
-    })  
+    })
     .catch(function(err) {
       console.log('Error: ');
       console.log(err);
@@ -282,7 +282,7 @@ describe('tpmongo', function () {
       for(var resultIter = 0; resultIter < result.length; resultIter++) {
         mapReduceReturnValue += result[resultIter].value || 0;
       }
-    })  
+    })
     .catch(function(err) {
       console.log('Error: ');
       console.log(err);
@@ -306,7 +306,7 @@ describe('tpmongo', function () {
       for(var resultIter = 0; resultIter < result.length; resultIter++) {
         aggregateTotal += result[resultIter].total;
       }
-    })  
+    })
     .catch(function(err) {
       console.log('Error: ');
       console.log(err);
@@ -330,7 +330,7 @@ describe('tpmongo', function () {
       for(var resultIter = 0; resultIter < result.length; resultIter++) {
         aggregateTotal += result[resultIter].total;
       }
-    })  
+    })
     .catch(function(err) {
       console.log('Error: ');
       console.log(err);
@@ -357,7 +357,7 @@ describe('tpmongo', function () {
     })
     .then(function(result) {
       pMongoResult = result;
-    })  
+    })
     .catch(function(err) {
       console.log('Error: ');
       console.log(err);
@@ -384,7 +384,7 @@ describe('tpmongo', function () {
     })
     .then(function(result) {
       pMongoResult = result;
-    })  
+    })
     .catch(function(err) {
       console.log('Error: ');
       console.log(err);
@@ -416,7 +416,7 @@ describe('tpmongo', function () {
       pMongoResult[1].value = _.pick(pMongoResult[1].value, ['a','b','c']);
       pMongoResult[1].lastErrorObject.connectionId = 0; // allow for different connection ids
       pMongoResult[1] = _.pick(pMongoResult[1], ['lastErrorObject','ok','value']);
-    })  
+    })
     .catch(function(err) {
       console.log('Error: ');
       console.log(err);
@@ -436,12 +436,12 @@ it('api consistency - update', function () {
     })
     .then(function(result) {
       tpMongoResult = result;
-      
+
       return db.tempCollection.updateRaw({_current: 1, a: 1}, {$set: {b: 4}}, {multi: true});
     })
     .then(function(result) {
       pMongoResult = result;
-    })  
+    })
     .catch(function(err) {
       console.log('Error: ');
       console.log(err);
@@ -465,10 +465,10 @@ it('api consistency - remove', function () {
     })
     .then(function() {
       return db.tempCollection.removeRaw({_current: 1, a: 1});
-    }) 
+    })
     .then(function(result) {
       pMongoResult = result;
-    })  
+    })
     .catch(function(err) {
       console.log('Error: ');
       console.log(err);
@@ -575,7 +575,7 @@ it('api consistency - remove', function () {
       return db.tempCollection.findByDate({a: 1}, new Date())
     })
     .then(function(findResult) {
-      actionWorked = true;  
+      actionWorked = true;
     })
     .catch(function(err) {
       console.log('Error: ');
@@ -595,7 +595,7 @@ it('api consistency - remove', function () {
     })
     .then(function(findOneResult) {
       if(findOneResult && findOneResult.a === 1) {
-        actionWorked = true;  
+        actionWorked = true;
       }
     })
     .catch(function(err) {
@@ -615,7 +615,7 @@ it('api consistency - remove', function () {
       return db.tempCollection.findOneByDate({a: 1}, new Date())
     })
     .then(function(findOneResult) {
-      actionWorked = true;  
+      actionWorked = true;
     })
     .catch(function(err) {
       console.log('Error: ');
@@ -796,5 +796,5 @@ it('api consistency - remove', function () {
     .finally(function() {
       actionWorked.should.equal(true);
     });
-  });  
+  });
 });
