@@ -1,5 +1,6 @@
 language: node_js
 env: CI=true
+sudo: false
 node_js:
   - "0.10"
 services:
@@ -8,13 +9,24 @@ env:
   matrix:
     - MONGODB=2.6.9
     - MONGODB=3.0.1
+addons:
+  apt:
+    sources:
+      - mongodb-upstart
+      - mongodb-3.0-precise
+    packages:
+      - mongodb-org-server
+      - mongodb-org-shell
 before_script:
-  - wget http://fastdl.mongodb.org/linux/mongodb-linux-x86_64-${MONGODB}.tgz -O /tmp/mongodb.tgz
-  - tar -xvf /tmp/mongodb.tgz
-  - mkdir /tmp/data
-  - ${PWD}/mongodb-linux-x86_64-${MONGODB}/bin/mongod --dbpath /tmp/data --bind_ip 127.0.0.1 --auth &> /dev/null &
+  - sleep 15
+before_script:
   - echo "replSet = myReplSetName" | sudo tee -a /etc/mongodb.conf
   - sudo service mongodb restart
   - sleep 20
   - mongo --eval 'rs.initiate()'
   - sleep 15
+notifications:
+  slack: 'mcchrystalgroup:EIED2QRuvpYDmPZSwmVfnlIg#team-c3-github'
+cache:
+  directories:
+    - node_modules
