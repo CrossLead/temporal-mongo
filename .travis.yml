@@ -1,14 +1,10 @@
 language: node_js
 env: CI=true
-sudo: false
+sudo: required
 node_js:
   - "0.10"
 services:
   - mongodb
-env:
-  matrix:
-    - MONGODB=2.6.9
-    - MONGODB=3.0.1
 addons:
   apt:
     sources:
