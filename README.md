@@ -1,4 +1,4 @@
-# tpmongo 
+# tpmongo
 [![NPM version][npm-image]][npm-url] [![Build Status][travis-image]][travis-url] [![Dependency Status][daviddm-url]][daviddm-image]
 
 temporal-mongo
@@ -36,7 +36,7 @@ Copyright (c) 2015 McChrystal Group. Licensed under the Apache license.
 
 [npm-url]: https://npmjs.org/package/tpmongo
 [npm-image]: https://badge.fury.io/js/tpmongo.svg
-[travis-url]: https://travis-ci.org/mcgrit/tpmongo
-[travis-image]: https://travis-ci.org/mcgrit/tpmongo.svg?branch=master
-[daviddm-url]: https://david-dm.org/mcgrit/tpmongo.svg?theme=shields.io
-[daviddm-image]: https://david-dm.org/mcgrit/tpmongo
+[travis-url]: https://travis-ci.org/CrossLead/tpmongo
+[travis-image]: https://travis-ci.org/CrossLead/tpmongo.svg?branch=master
+[daviddm-url]: https://david-dm.org/CrossLead/tpmongo.svg?theme=shields.io
+[daviddm-image]: https://david-dm.org/CrossLead/tpmongo
