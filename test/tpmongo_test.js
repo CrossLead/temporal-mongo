@@ -1,7 +1,8 @@
 var tpmongo = require('../');
+var pmongo = require('promised-mongo');
 var should = require('should');
 var _ = require('lodash');
-var massInsertCount = 1000;
+var massInsertCount = 50;
 
 /**
  * Pause for <ms>
@@ -13,11 +14,16 @@ function delay(ms = 0) {
   return new Promise(res => setTimeout(res, ms));
 }
 
-describe('tpmongo', function () {
+describe('tpmongo', function() {
+  this.timeout(30000);
+
+  // drop test db for temporalization
+  before(() => pmongo('localhost/tpmongoTestDb').dropDatabase());
 
   //setup
   var maxDate = new Date('2099-07-21 15:16:00.599Z');
   var mongoCollections = ['tempCollection'];
+
   var db = tpmongo('localhost/tpmongoTestDb', mongoCollections, { _maxDate: maxDate });
 
   var testObjectId = db.ObjectId('5609b87d282d4aac260fcb9f');
@@ -30,7 +36,7 @@ describe('tpmongo', function () {
     var doc2 = {a: 1, b:2, c:2, _current: 1, _id: db.ObjectId('55addf649ce171641a34281e'), _rId: db.ObjectId('55addf649ce171641a34281e'), _startDate: testStartDate, _endDate: testEndDate};
     var doc3 = {a: 1, b:3, c:2, _current: 1, _id: db.ObjectId('5609b87d282d4aac260fcb9f'), _rId: db.ObjectId('5609b87d282d4aac260fcb9f'), _startDate: testStartDate, _endDate: testEndDate};
 
-    return db.tempCollection.removeRaw({}, {w: 'majority'})
+    return db.tempCollection.removeRaw({})
     .then(function() {
       return db.tempCollection.insertRaw(doc1);
     })
@@ -50,9 +56,9 @@ describe('tpmongo', function () {
     for(var i = 0; i < massInsertCount; i++) {
       docs.push({a:1});
     }
-    return db.tempCollection.removeRaw({}, {w: 'majority'})
+    return db.tempCollection.removeRaw({})
     .then(function() {
-      return db.tempCollection.insertRaw(docs, {w: 'majority'});
+      return db.tempCollection.insertRaw(docs);
     });
   };
 
@@ -151,12 +157,13 @@ describe('tpmongo', function () {
     .then(function(theCount) {
       docCount = theCount;
     })
+    .then(function() {
+      docCount.should.be.exactly(massInsertCount);
+    })
     .catch(function(err) {
       console.log('Error: ');
       console.log(err);
-    })
-    .then(function() {
-      docCount.should.be.exactly(massInsertCount);
+      throw err;
     });
   });
 
@@ -266,7 +273,8 @@ describe('tpmongo', function () {
     .then(function() {
       return db.tempCollection.mapReduce(testMapping, testReduce, {out: {inline: 1}, query: {a:1}});
     })
-    .then(function(result) {
+    .then(function(results) {
+      var result = results.results;
       for(var resultIter = 0; resultIter < result.length; resultIter++) {
         mapReduceReturnValue += result[resultIter].value;
       }
@@ -287,7 +295,8 @@ describe('tpmongo', function () {
     .then(function() {
       return db.tempCollection.mapReduceByDate(testMapping, testReduce, {out: {inline: 1}, query: {a:1}}, testMiddleDate);
     })
-    .then(function(result) {
+    .then(function(results) {
+      var result = results.results;
       for(var resultIter = 0; resultIter < result.length; resultIter++) {
         mapReduceReturnValue += result[resultIter].value || 0;
       }
@@ -412,7 +421,6 @@ describe('tpmongo', function () {
       return db.tempCollection.findAndModify({query: {b: 3}, update: {$set: {anotherProperty: 2}}});
     })
     .then(function(result) {
-      console.log(result)
       tpMongoResult = result;
       tpMongoResult.value = _.pick(tpMongoResult.value, ['a','b','c']);
       tpMongoResult.lastErrorObject.connectionId = 0; // allow for different connection ids
@@ -420,7 +428,6 @@ describe('tpmongo', function () {
       return db.tempCollection.findAndModifyRaw({query: {_current: 1, b: 3}, update: {$set: {anotherProperty: 2}}});
     })
     .then(function(result) {
-      console.log(result)
       pMongoResult = result;
       pMongoResult.value = _.pick(pMongoResult.value, ['a','b','c']);
       pMongoResult.lastErrorObject.connectionId = 0; // allow for different connection ids
@@ -445,11 +452,15 @@ describe('tpmongo', function () {
     })
     .then(function(result) {
       tpMongoResult = result;
-
+      return setupDocuments();
+    })
+    .then(function() {
       return db.tempCollection.updateRaw({_current: 1, a: 1}, {$set: {b: 4}}, {multi: true});
     })
     .then(function(result) {
       pMongoResult = result;
+      // need to double the number modified to match tpmongo (which also must update the current doc)
+      pMongoResult.nModified *= 2;
     })
     .catch(function(err) {
       console.log('Error: ');
