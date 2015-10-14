@@ -16,10 +16,10 @@
   "keywords": [],
   "dependencies": {
     "babel-runtime": "^5.8.25",
-    "lodash": "^3.10.0",
     "promised-mongo": "^1.2.0"
   },
   "devDependencies": {
+    "lodash": "^3.10.0",
     "babel": "^5.8.23",
     "babel-core": "^5.8.25",
     "babel-eslint": "^4.1.3",
