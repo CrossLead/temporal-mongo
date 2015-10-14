@@ -1,2 +1,0 @@
-#!/usr/bin/env bash
-mongo tpmongoTestDb --eval 'db.createUser({user: "admin", pwd: "password", roles: [ { role: "root", db: "admin" } ]});'

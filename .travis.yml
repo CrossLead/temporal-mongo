@@ -3,25 +3,16 @@ env: CI=true
 sudo: required
 node_js:
   - "0.10"
-services:
-  - mongodb
-addons:
-  apt:
-    sources:
-      - mongodb-upstart
-      - mongodb-3.0-precise
-    packages:
-      - mongodb-org-server
-      - mongodb-org-shell
-before_script:
-  - sleep 15
-before_script:
+before_install:
+  - curl https://fastdl.mongodb.org/osx/mongodb-osx-x86_64-3.1.9.tgz -O
+  - tar -xzvf mongodb-osx-x86_64-3.1.9.tgz
+  - mkdir -p mongo/db
+  - mkdir -p mongo/log
+  - ./mongodb-osx-x86_64-3.1.9/bin/mongod --dbpath=./mongo/db --fork --logpath=./mongo/log/test.log
+  - sleep 5
   - echo "replSet = myReplSetName" | sudo tee -a /etc/mongodb.conf
-  - sudo sh ./scripts/addAdmin
   - sudo service mongodb restart
-  - sleep 20
   - mongo --eval 'rs.initiate()'
-  - sleep 15
 cache:
   directories:
     - node_modules
