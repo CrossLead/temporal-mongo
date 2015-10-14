@@ -17,8 +17,7 @@
   "dependencies": {
     "babel-runtime": "^5.8.25",
     "lodash": "^3.10.0",
-    "promised-mongo": "https://github.com/gordonmleigh/promised-mongo/tarball/v0.11.5",
-    "q": "1.4.1"
+    "promised-mongo": "https://github.com/gordonmleigh/promised-mongo/tarball/v0.11.5"
   },
   "devDependencies": {
     "babel": "^5.8.23",

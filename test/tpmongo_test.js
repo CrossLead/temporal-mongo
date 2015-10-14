@@ -1,8 +1,17 @@
 var tpmongo = require('../');
 var should = require('should');
-var Q = require('q');
 var _ = require('lodash');
 var massInsertCount = 1000;
+
+/**
+ * Pause for <ms>
+ *
+ * @param {Integer} milliseconds to wait
+ * @return Promise<undefined> promise resolving after delay
+ */
+function delay(ms = 0) {
+  return new Promise(res => setTimeout(res, ms));
+}
 
 describe('tpmongo', function () {
 
@@ -32,7 +41,7 @@ describe('tpmongo', function () {
       return db.tempCollection.insertRaw(doc3);
     })
     .then(function() {
-      return Q.delay(50);
+      return delay(50);
     });
   };
 
@@ -775,7 +784,7 @@ it('api consistency - remove', function () {
         insertPromises.push(db.tempCollection.insert({'tempProperty': tempValue, 'sameValue': 3, doc2val:2}, {writeConcern: 'majority'}));
       }
 
-      return Q.all(insertPromises)
+      return Promise.all(insertPromises)
       .then(function() {
         var updatePromises = [];
         for(var i = 0; i < numberOfUpdatesToTest; i++) {
@@ -783,7 +792,7 @@ it('api consistency - remove', function () {
           updatePromises.push(db.tempCollection.findAndModify({query: {a: 1}, update: {$set: {'anotherProperty': 2}}}));
         }
 
-        return Q.all(updatePromises);
+        return Promise.all(updatePromises);
       });
     })
     .then(function(saveResult) {
