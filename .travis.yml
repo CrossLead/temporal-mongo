@@ -5,7 +5,7 @@ node_js:
   - "0.10"
 before_install:
   - echo "replSet = myReplSetName" | sudo tee -a /etc/mongodb.conf
-  - curl https://fastdl.mongodb.org/osx/mongodb-osx-x86_64-3.1.9.tgz -O -#
+  - curl https://fastdl.mongodb.org/linux/mongodb-linux-x86_64-ubuntu1204-3.1.9.tgz -O -#
   - tar -xzvf mongodb-osx-x86_64-3.1.9.tgz
   - mkdir -p mongo/db
   - mkdir -p mongo/log
