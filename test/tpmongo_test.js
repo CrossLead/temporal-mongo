@@ -14,6 +14,17 @@ function delay(ms = 0) {
   return new Promise(res => setTimeout(res, ms));
 }
 
+/**
+ * Test functions for map reduce
+ */
+function testMapping() {
+  emit(this.c, this.b);
+}
+
+function testReduce(keyA, bValues) {
+  return Array.sum(bValues);
+}
+
 describe('tpmongo', function() {
   this.timeout(30000);
 
@@ -255,13 +266,7 @@ describe('tpmongo', function() {
     });
   });
 
-  var testMapping = function() {
-    emit(this.c, this.b);
-  };
 
-  var testReduce = function(keyA, bValues) {
-    return Array.sum(bValues);
-  };
 
   it('mapReduce should work', function () {
     var mapReduceReturnValue = 0;
