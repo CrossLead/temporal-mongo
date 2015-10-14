@@ -74,7 +74,7 @@ describe('tpmongo', function () {
       console.log('Error: ');
       console.log(err);
     })
-    .finally(function() {
+    .then(function() {
       actionWorked.should.equal(true);
     });
   });
@@ -94,7 +94,7 @@ describe('tpmongo', function () {
     .catch(function() {
       //this should actually happen for this test
     })
-    .finally(function() {
+    .then(function() {
       actionWorked.should.equal(false);
     });
   });
@@ -112,7 +112,7 @@ describe('tpmongo', function () {
       console.log('Error: ');
       console.log(err);
     })
-    .finally(function() {
+    .then(function() {
       actionWorked.should.equal(true);
     });
   });
@@ -133,13 +133,13 @@ describe('tpmongo', function () {
       console.log('Error: ');
       console.log(err);
     })
-    .finally(function() {
+    .then(function() {
       badDocCount.should.be.exactly(0);
     });
   });
 
   it('tpmongo should be object', function () {
-		(typeof db).should.equal('object');
+    (typeof db).should.equal('object');
   });
 
   it('mass insertRaw works', function () {
@@ -155,7 +155,7 @@ describe('tpmongo', function () {
       console.log('Error: ');
       console.log(err);
     })
-    .finally(function() {
+    .then(function() {
       docCount.should.be.exactly(massInsertCount);
     });
   });
@@ -177,7 +177,7 @@ describe('tpmongo', function () {
       console.log('Error: ');
       console.log(err);
     })
-    .finally(function() {
+    .then(function() {
       docCount.should.be.exactly(3);
     });
   });
@@ -199,7 +199,7 @@ describe('tpmongo', function () {
       console.log('Error: ');
       console.log(err);
     })
-    .finally(function() {
+    .then(function() {
       docCount.should.be.exactly(3);
     });
   });
@@ -221,7 +221,7 @@ describe('tpmongo', function () {
       console.log('Error: ');
       console.log(err);
     })
-    .finally(function() {
+    .then(function() {
       distinctValueCount.should.be.exactly(2);
     });
   });
@@ -243,7 +243,7 @@ describe('tpmongo', function () {
       console.log('Error: ');
       console.log(err);
     })
-    .finally(function() {
+    .then(function() {
       distinctValueCount.should.be.exactly(2);
     });
   });
@@ -275,7 +275,7 @@ describe('tpmongo', function () {
       console.log('Error: ');
       console.log(err);
     })
-    .finally(function() {
+    .then(function() {
       mapReduceReturnValue.should.be.exactly(12);
     });
   });
@@ -296,7 +296,7 @@ describe('tpmongo', function () {
       console.log('Error: ');
       console.log(err);
     })
-    .finally(function() {
+    .then(function() {
       mapReduceReturnValue.should.be.exactly(5);
     });
   });
@@ -320,7 +320,7 @@ describe('tpmongo', function () {
       console.log('Error: ');
       console.log(err);
     })
-    .finally(function() {
+    .then(function() {
       aggregateTotal.should.be.exactly(12);
     });
   });
@@ -344,7 +344,7 @@ describe('tpmongo', function () {
       console.log('Error: ');
       console.log(err);
     })
-    .finally(function() {
+    .then(function() {
       aggregateTotal.should.be.exactly(5);
     });
   });
@@ -371,7 +371,7 @@ describe('tpmongo', function () {
       console.log('Error: ');
       console.log(err);
     })
-    .finally(function() {
+    .then(function() {
       should.deepEqual(tpMongoResult, pMongoResult);
     });
   });
@@ -398,7 +398,7 @@ describe('tpmongo', function () {
       console.log('Error: ');
       console.log(err);
     })
-    .finally(function() {
+    .then(function() {
       should.deepEqual(tpMongoResult, pMongoResult);
     });
   });
@@ -430,12 +430,12 @@ describe('tpmongo', function () {
       console.log('Error: ');
       console.log(err);
     })
-    .finally(function() {
+    .then(function() {
       should.deepEqual(tpMongoResult, pMongoResult);
     });
   });
 
-it('api consistency - update', function () {
+  it('api consistency - update', function () {
     var tpMongoResult = {};
     var pMongoResult = {};
 
@@ -455,12 +455,12 @@ it('api consistency - update', function () {
       console.log('Error: ');
       console.log(err);
     })
-    .finally(function() {
+    .then(function() {
       should.deepEqual(tpMongoResult, pMongoResult);
     });
   });
 
-it('api consistency - remove', function () {
+  it('api consistency - remove', function () {
     var tpMongoResult = {};
     var pMongoResult = {};
 
@@ -482,7 +482,7 @@ it('api consistency - remove', function () {
       console.log('Error: ');
       console.log(err);
     })
-    .finally(function() {
+    .then(function() {
       should.deepEqual(tpMongoResult, pMongoResult);
     });
   });
@@ -490,7 +490,7 @@ it('api consistency - remove', function () {
   it('initialize works', function () {
     var docCount = 0;
     var initializedCount = 0;
-    var initializationComplete = false;
+    // var initializationComplete = false;
     return massInsertTest()
     .then(function() {
       return db.tempCollection.countRaw({});
@@ -498,7 +498,7 @@ it('api consistency - remove', function () {
     .then(function(theCount) {
       docCount = theCount;
     })
-    .then(function(theCount) {
+    .then(function() {
       return db.tempCollection.countRaw({_rId: {$exists: true}});
     })
     .then(function(alreadyInitializedCount) {
@@ -512,7 +512,7 @@ it('api consistency - remove', function () {
       console.log('Error: ');
       console.log(err);
     })
-    .finally(function() {
+    .then(function() {
       docCount.should.be.exactly(massInsertCount);
     });
   });
@@ -531,7 +531,7 @@ it('api consistency - remove', function () {
       console.log('Error: ');
       console.log(err);
     })
-    .finally(function() {
+    .then(function() {
       docCount.should.be.exactly(3);
     });
   });
@@ -550,7 +550,7 @@ it('api consistency - remove', function () {
       console.log('Error: ');
       console.log(err);
     })
-    .finally(function() {
+    .then(function() {
       docCount.should.be.exactly(3);
     });
   });
@@ -571,7 +571,7 @@ it('api consistency - remove', function () {
       console.log('Error: ');
       console.log(err);
     })
-    .finally(function() {
+    .then(function() {
       docCount.should.be.exactly(3);
     });
   });
@@ -583,14 +583,14 @@ it('api consistency - remove', function () {
     .then(function() {
       return db.tempCollection.findByDate({a: 1}, new Date())
     })
-    .then(function(findResult) {
+    .then(function(/* findResult */) {
       actionWorked = true;
     })
     .catch(function(err) {
       console.log('Error: ');
       console.log(err);
     })
-    .finally(function() {
+    .then(function() {
       actionWorked.should.equal(true);
     });
   });
@@ -611,7 +611,7 @@ it('api consistency - remove', function () {
       console.log('Error: ');
       console.log(err);
     })
-    .finally(function() {
+    .then(function() {
       actionWorked.should.equal(true);
     });
   });
@@ -623,14 +623,14 @@ it('api consistency - remove', function () {
     .then(function() {
       return db.tempCollection.findOneByDate({a: 1}, new Date())
     })
-    .then(function(findOneResult) {
+    .then(function(/* findOneResult */) {
       actionWorked = true;
     })
     .catch(function(err) {
       console.log('Error: ');
       console.log(err);
     })
-    .finally(function() {
+    .then(function() {
       actionWorked.should.equal(true);
     });
   });
@@ -643,14 +643,14 @@ it('api consistency - remove', function () {
     .then(function() {
       return db.tempCollection.findAndModify({query: {a: 1}, update: {$set: {anotherProperty: 2}}});
     })
-    .then(function(foundDocuments) {
+    .then(function(/* foundDocuments */) {
       actionWorked = true;
     })
     .catch(function(err) {
       console.log('Error: ');
       console.log(err);
     })
-    .finally(function() {
+    .then(function() {
       actionWorked.should.equal(true);
     });
   });
@@ -662,14 +662,14 @@ it('api consistency - remove', function () {
     .then(function() {
       return db.tempCollection.findAndModify({query: {x: 1}, upsert: true, update: {$set: {x: 1, anotherProperty: 2}}});
     })
-    .then(function(foundDocuments) {
+    .then(function(/* foundDocuments */) {
       actionWorked = true;
     })
     .catch(function(err) {
       console.log('Error: ');
       console.log(err);
     })
-    .finally(function() {
+    .then(function() {
       actionWorked.should.equal(true);
     });
   });
@@ -681,14 +681,14 @@ it('api consistency - remove', function () {
     .then(function() {
       return db.tempCollection.update({a: 1}, {$set: {c: 4}}, {multi: true});
     })
-    .then(function(updateResult) {
+    .then(function(/* updateResult */) {
       actionWorked = true;
     })
     .catch(function(err) {
       console.log('Error: ');
       console.log(err);
     })
-    .finally(function() {
+    .then(function() {
       actionWorked.should.equal(true);
     });
   });
@@ -700,14 +700,14 @@ it('api consistency - remove', function () {
     .then(function() {
       return db.tempCollection.update({a: 1}, {$set: {c: 4}}, {multi: true, upsert: true});
     })
-    .then(function(updateResult) {
+    .then(function(/* updateResult */) {
       actionWorked = true;
     })
     .catch(function(err) {
       console.log('Error: ');
       console.log(err);
     })
-    .finally(function() {
+    .then(function() {
       actionWorked.should.equal(true);
     });
   });
@@ -752,14 +752,14 @@ it('api consistency - remove', function () {
     .then(function() {
       return db.tempCollection.remove({a: 1});
     })
-    .then(function(saveResult) {
+    .then(function(/* saveResult */) {
       actionWorked = true;
     })
     .catch(function(err) {
       console.log('Error: ');
       console.log(err);
     })
-    .finally(function() {
+    .then(function() {
       actionWorked.should.equal(true);
     });
   });
@@ -769,10 +769,10 @@ it('api consistency - remove', function () {
 
     return setupDocuments()
     .then(function() {
-      var returnObject = {success: true, errors: []};
+      //var returnObject = {success: true, errors: []};
 
       var tempValue = new Date();
-      var query = {'tempProperty': tempValue};
+      //var query = {'tempProperty': tempValue};
       var queryMultiple = {'sameValue': 1};
       var update = {$set: {'anotherProperty': 1}};
       var numberOfUpdatesToTest = 5;
@@ -795,14 +795,14 @@ it('api consistency - remove', function () {
         return Promise.all(updatePromises);
       });
     })
-    .then(function(saveResult) {
+    .then(function(/* saveResult */) {
       actionWorked = true;
     })
     .catch(function(err) {
       console.log('Error: ');
       console.log(err);
     })
-    .finally(function() {
+    .then(function() {
       actionWorked.should.equal(true);
     });
   });

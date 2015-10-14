@@ -3,6 +3,7 @@ import babel from 'gulp-babel';
 import loadPlugins from 'gulp-load-plugins';
 import sourcemaps from 'gulp-sourcemaps';
 import eslint from 'gulp-eslint';
+import istanbul from 'gulp-babel-istanbul';
 
 const plugins = loadPlugins();
 
@@ -42,13 +43,13 @@ gulp.task('eslint', () => {
 
 gulp.task('istanbul', ['compile'], cb => {
   gulp.src(paths.source)
-    .pipe(plugins.istanbul()) // Covering files
-    .pipe(plugins.istanbul.hookRequire()) // Force `require` to return covered files
+    .pipe(istanbul()) // Covering files
+    .pipe(istanbul.hookRequire()) // Force `require` to return covered files
     .on('finish', function () {
       gulp.src(paths.tests)
         .pipe(plugins.plumber(plumberConf))
         .pipe(plugins.mocha({timeout: 10000}))
-        .pipe(plugins.istanbul.writeReports()) // Creating the reports after tests runned
+        .pipe(istanbul.writeReports()) // Creating the reports after tests runned
         .on('finish', function() {
           process.chdir(__dirname);
           cb();
