@@ -412,19 +412,19 @@ describe('tpmongo', function () {
       return db.tempCollection.findAndModify({query: {b: 3}, update: {$set: {anotherProperty: 2}}});
     })
     .then(function(result) {
+      console.log(result)
       tpMongoResult = result;
-      tpMongoResult[0] = _.pick(tpMongoResult[0], ['a','b','c']);
-      tpMongoResult[1].value = _.pick(tpMongoResult[1].value, ['a','b','c']);
-      tpMongoResult[1].lastErrorObject.connectionId = 0; // allow for different connection ids
-      tpMongoResult[1] = _.pick(tpMongoResult[1], ['lastErrorObject','ok','value']);
+      tpMongoResult.value = _.pick(tpMongoResult.value, ['a','b','c']);
+      tpMongoResult.lastErrorObject.connectionId = 0; // allow for different connection ids
+      tpMongoResult = _.pick(tpMongoResult, ['lastErrorObject','ok','value']);
       return db.tempCollection.findAndModifyRaw({query: {_current: 1, b: 3}, update: {$set: {anotherProperty: 2}}});
     })
     .then(function(result) {
+      console.log(result)
       pMongoResult = result;
-      pMongoResult[0] = _.pick(pMongoResult[0], ['a','b','c']);
-      pMongoResult[1].value = _.pick(pMongoResult[1].value, ['a','b','c']);
-      pMongoResult[1].lastErrorObject.connectionId = 0; // allow for different connection ids
-      pMongoResult[1] = _.pick(pMongoResult[1], ['lastErrorObject','ok','value']);
+      pMongoResult.value = _.pick(pMongoResult.value, ['a','b','c']);
+      pMongoResult.lastErrorObject.connectionId = 0; // allow for different connection ids
+      pMongoResult = _.pick(pMongoResult, ['lastErrorObject','ok','value']);
     })
     .catch(function(err) {
       console.log('Error: ');
