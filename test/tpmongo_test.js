@@ -2,7 +2,7 @@ var tpmongo = require('../');
 var pmongo = require('promised-mongo');
 var should = require('should');
 var _ = require('lodash');
-var massInsertCount = 50;
+var massInsertCount = 1000;
 
 /**
  * Pause for <ms>
