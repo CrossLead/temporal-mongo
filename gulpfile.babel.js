@@ -77,9 +77,9 @@ gulp.on('stop', function () {
   });
 });
 
-gulp.task('test', ['eslint'], () => gulp
+gulp.task('test', ['compile', 'eslint'], () => gulp
   .src(paths.tests)
-  .pipe(plugins.mocha({timeout: 10000})));
+  .pipe(plugins.mocha()));
 
 gulp.task('release', ['bump']);
 

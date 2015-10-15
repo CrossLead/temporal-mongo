@@ -5,7 +5,7 @@
   "homepage": "https://github.com/CrossLead/temporal-mongo",
   "bugs": "https://github.com/CrossLead/temporal-mongo/issues",
   "license": "Apache 2",
-  "main": "dist/tpmongo.js",
+  "main": "dist/index.js",
   "author": {
     "name": "Ryan McGregor"
   },
