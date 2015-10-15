@@ -25,6 +25,57 @@ function testReduce(keyA, bValues) {
   return Array.sum(bValues);
 }
 
+describe('utility functions', () => {
+  const { util } = tpmongo;
+
+  it('tpmongo should include util functions', done => {
+    should.exist(util);
+    done();
+  });
+
+  it('util.omit should exclude properties', done => {
+    should.deepEqual(util.omit({a:1, b:2}, 'b'), {a: 1});
+    done();
+  });
+
+  it('util.addRawMethods should add all expected raw methods to prototype', done => {
+
+    @util.addRawMethods([
+      'find',
+      'remove'
+    ])
+    class Test { }
+
+    const t = new Test;
+
+    should.exist(t.findRaw);
+    should.exist(t.removeRaw);
+    done();
+  });
+
+  it('util.sanitizeUpdate should exclude _current', done => {
+    should.deepEqual(util.sanitizeUpdate({a:1, _current:1}), {a: 1});
+    done();
+  });
+
+  it('util.addCurrent should add current status to query', done => {
+    should.deepEqual(util.addCurrent({a: 1}), { a: 1, _current: tpmongo.CurrentStatus.Current });
+    done();
+  });
+
+  it('util.addDate should add date restriction to query', done => {
+    const date = new Date();
+    should.deepEqual(
+      util.addDate({a: 1}, date),
+      { a: 1,
+        _startDate: {$lte : date},
+        _endDate:   {$gt  : date} }
+    );
+    done();
+  });
+
+});
+
 describe('tpmongo', function() {
   this.timeout(30000);
 
