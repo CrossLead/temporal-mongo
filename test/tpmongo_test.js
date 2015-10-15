@@ -1,14 +1,91 @@
 var tpmongo = require('../');
+var pmongo = require('promised-mongo');
 var should = require('should');
-var Q = require('q');
 var _ = require('lodash');
 var massInsertCount = 1000;
 
-describe('tpmongo', function () {
+/**
+ * Pause for <ms>
+ *
+ * @param {Integer} milliseconds to wait
+ * @return Promise<undefined> promise resolving after delay
+ */
+function delay(ms = 0) {
+  return new Promise(res => setTimeout(res, ms));
+}
+
+/**
+ * Test functions for map reduce
+ */
+function testMapping() {
+  emit(this.c, this.b);
+}
+
+function testReduce(keyA, bValues) {
+  return Array.sum(bValues);
+}
+
+describe('utility functions', () => {
+  const { util } = tpmongo;
+
+  it('tpmongo should include util functions', done => {
+    should.exist(util);
+    done();
+  });
+
+  it('util.omit should exclude properties', done => {
+    should.deepEqual(util.omit({a:1, b:2}, 'b'), {a: 1});
+    done();
+  });
+
+  it('util.addRawMethods should add all expected raw methods to prototype', done => {
+
+    @util.addRawMethods([
+      'find',
+      'remove'
+    ])
+    class Test { }
+
+    const t = new Test;
+
+    should.exist(t.findRaw);
+    should.exist(t.removeRaw);
+    done();
+  });
+
+  it('util.sanitizeUpdate should exclude _current', done => {
+    should.deepEqual(util.sanitizeUpdate({a:1, _current:1}), {a: 1});
+    done();
+  });
+
+  it('util.addCurrent should add current status to query', done => {
+    should.deepEqual(util.addCurrent({a: 1}), { a: 1, _current: tpmongo.CurrentStatus.Current });
+    done();
+  });
+
+  it('util.addDate should add date restriction to query', done => {
+    const date = new Date();
+    should.deepEqual(
+      util.addDate({a: 1}, date),
+      { a: 1,
+        _startDate: {$lte : date},
+        _endDate:   {$gt  : date} }
+    );
+    done();
+  });
+
+});
+
+describe('tpmongo', function() {
+  this.timeout(30000);
+
+  // drop test db for temporalization
+  before(() => pmongo('localhost/tpmongoTestDb').dropDatabase());
 
   //setup
   var maxDate = new Date('2099-07-21 15:16:00.599Z');
   var mongoCollections = ['tempCollection'];
+
   var db = tpmongo('localhost/tpmongoTestDb', mongoCollections, { _maxDate: maxDate });
 
   var testObjectId = db.ObjectId('5609b87d282d4aac260fcb9f');
@@ -21,7 +98,7 @@ describe('tpmongo', function () {
     var doc2 = {a: 1, b:2, c:2, _current: 1, _id: db.ObjectId('55addf649ce171641a34281e'), _rId: db.ObjectId('55addf649ce171641a34281e'), _startDate: testStartDate, _endDate: testEndDate};
     var doc3 = {a: 1, b:3, c:2, _current: 1, _id: db.ObjectId('5609b87d282d4aac260fcb9f'), _rId: db.ObjectId('5609b87d282d4aac260fcb9f'), _startDate: testStartDate, _endDate: testEndDate};
 
-    return db.tempCollection.removeRaw({}, {w: 'majority'})
+    return db.tempCollection.removeRaw({})
     .then(function() {
       return db.tempCollection.insertRaw(doc1);
     })
@@ -32,7 +109,7 @@ describe('tpmongo', function () {
       return db.tempCollection.insertRaw(doc3);
     })
     .then(function() {
-      return Q.delay(50);
+      return delay(50);
     });
   };
 
@@ -41,9 +118,9 @@ describe('tpmongo', function () {
     for(var i = 0; i < massInsertCount; i++) {
       docs.push({a:1});
     }
-    return db.tempCollection.removeRaw({}, {w: 'majority'})
+    return db.tempCollection.removeRaw({})
     .then(function() {
-      return db.tempCollection.insertRaw(docs, {w: 'majority'});
+      return db.tempCollection.insertRaw(docs);
     });
   };
 
@@ -65,7 +142,7 @@ describe('tpmongo', function () {
       console.log('Error: ');
       console.log(err);
     })
-    .finally(function() {
+    .then(function() {
       actionWorked.should.equal(true);
     });
   });
@@ -85,7 +162,7 @@ describe('tpmongo', function () {
     .catch(function() {
       //this should actually happen for this test
     })
-    .finally(function() {
+    .then(function() {
       actionWorked.should.equal(false);
     });
   });
@@ -103,7 +180,7 @@ describe('tpmongo', function () {
       console.log('Error: ');
       console.log(err);
     })
-    .finally(function() {
+    .then(function() {
       actionWorked.should.equal(true);
     });
   });
@@ -124,13 +201,13 @@ describe('tpmongo', function () {
       console.log('Error: ');
       console.log(err);
     })
-    .finally(function() {
+    .then(function() {
       badDocCount.should.be.exactly(0);
     });
   });
 
   it('tpmongo should be object', function () {
-		(typeof db).should.equal('object');
+    (typeof db).should.equal('object');
   });
 
   it('mass insertRaw works', function () {
@@ -142,12 +219,13 @@ describe('tpmongo', function () {
     .then(function(theCount) {
       docCount = theCount;
     })
+    .then(function() {
+      docCount.should.be.exactly(massInsertCount);
+    })
     .catch(function(err) {
       console.log('Error: ');
       console.log(err);
-    })
-    .finally(function() {
-      docCount.should.be.exactly(massInsertCount);
+      throw err;
     });
   });
 
@@ -168,7 +246,7 @@ describe('tpmongo', function () {
       console.log('Error: ');
       console.log(err);
     })
-    .finally(function() {
+    .then(function() {
       docCount.should.be.exactly(3);
     });
   });
@@ -190,7 +268,7 @@ describe('tpmongo', function () {
       console.log('Error: ');
       console.log(err);
     })
-    .finally(function() {
+    .then(function() {
       docCount.should.be.exactly(3);
     });
   });
@@ -212,7 +290,7 @@ describe('tpmongo', function () {
       console.log('Error: ');
       console.log(err);
     })
-    .finally(function() {
+    .then(function() {
       distinctValueCount.should.be.exactly(2);
     });
   });
@@ -234,18 +312,12 @@ describe('tpmongo', function () {
       console.log('Error: ');
       console.log(err);
     })
-    .finally(function() {
+    .then(function() {
       distinctValueCount.should.be.exactly(2);
     });
   });
 
-  var testMapping = function() {
-    emit(this.c, this.b);
-  };
 
-  var testReduce = function(keyA, bValues) {
-    return Array.sum(bValues);
-  };
 
   it('mapReduce should work', function () {
     var mapReduceReturnValue = 0;
@@ -257,7 +329,8 @@ describe('tpmongo', function () {
     .then(function() {
       return db.tempCollection.mapReduce(testMapping, testReduce, {out: {inline: 1}, query: {a:1}});
     })
-    .then(function(result) {
+    .then(function(results) {
+      var result = results.results;
       for(var resultIter = 0; resultIter < result.length; resultIter++) {
         mapReduceReturnValue += result[resultIter].value;
       }
@@ -266,7 +339,7 @@ describe('tpmongo', function () {
       console.log('Error: ');
       console.log(err);
     })
-    .finally(function() {
+    .then(function() {
       mapReduceReturnValue.should.be.exactly(12);
     });
   });
@@ -278,7 +351,8 @@ describe('tpmongo', function () {
     .then(function() {
       return db.tempCollection.mapReduceByDate(testMapping, testReduce, {out: {inline: 1}, query: {a:1}}, testMiddleDate);
     })
-    .then(function(result) {
+    .then(function(results) {
+      var result = results.results;
       for(var resultIter = 0; resultIter < result.length; resultIter++) {
         mapReduceReturnValue += result[resultIter].value || 0;
       }
@@ -287,7 +361,7 @@ describe('tpmongo', function () {
       console.log('Error: ');
       console.log(err);
     })
-    .finally(function() {
+    .then(function() {
       mapReduceReturnValue.should.be.exactly(5);
     });
   });
@@ -311,7 +385,7 @@ describe('tpmongo', function () {
       console.log('Error: ');
       console.log(err);
     })
-    .finally(function() {
+    .then(function() {
       aggregateTotal.should.be.exactly(12);
     });
   });
@@ -335,7 +409,7 @@ describe('tpmongo', function () {
       console.log('Error: ');
       console.log(err);
     })
-    .finally(function() {
+    .then(function() {
       aggregateTotal.should.be.exactly(5);
     });
   });
@@ -362,7 +436,7 @@ describe('tpmongo', function () {
       console.log('Error: ');
       console.log(err);
     })
-    .finally(function() {
+    .then(function() {
       should.deepEqual(tpMongoResult, pMongoResult);
     });
   });
@@ -389,7 +463,7 @@ describe('tpmongo', function () {
       console.log('Error: ');
       console.log(err);
     })
-    .finally(function() {
+    .then(function() {
       should.deepEqual(tpMongoResult, pMongoResult);
     });
   });
@@ -404,29 +478,27 @@ describe('tpmongo', function () {
     })
     .then(function(result) {
       tpMongoResult = result;
-      tpMongoResult[0] = _.pick(tpMongoResult[0], ['a','b','c']);
-      tpMongoResult[1].value = _.pick(tpMongoResult[1].value, ['a','b','c']);
-      tpMongoResult[1].lastErrorObject.connectionId = 0; // allow for different connection ids
-      tpMongoResult[1] = _.pick(tpMongoResult[1], ['lastErrorObject','ok','value']);
+      tpMongoResult.value = _.pick(tpMongoResult.value, ['a','b','c']);
+      tpMongoResult.lastErrorObject.connectionId = 0; // allow for different connection ids
+      tpMongoResult = _.pick(tpMongoResult, ['lastErrorObject','ok','value']);
       return db.tempCollection.findAndModifyRaw({query: {_current: 1, b: 3}, update: {$set: {anotherProperty: 2}}});
     })
     .then(function(result) {
       pMongoResult = result;
-      pMongoResult[0] = _.pick(pMongoResult[0], ['a','b','c']);
-      pMongoResult[1].value = _.pick(pMongoResult[1].value, ['a','b','c']);
-      pMongoResult[1].lastErrorObject.connectionId = 0; // allow for different connection ids
-      pMongoResult[1] = _.pick(pMongoResult[1], ['lastErrorObject','ok','value']);
+      pMongoResult.value = _.pick(pMongoResult.value, ['a','b','c']);
+      pMongoResult.lastErrorObject.connectionId = 0; // allow for different connection ids
+      pMongoResult = _.pick(pMongoResult, ['lastErrorObject','ok','value']);
     })
     .catch(function(err) {
       console.log('Error: ');
       console.log(err);
     })
-    .finally(function() {
+    .then(function() {
       should.deepEqual(tpMongoResult, pMongoResult);
     });
   });
 
-it('api consistency - update', function () {
+  it('api consistency - update', function () {
     var tpMongoResult = {};
     var pMongoResult = {};
 
@@ -436,22 +508,26 @@ it('api consistency - update', function () {
     })
     .then(function(result) {
       tpMongoResult = result;
-
+      return setupDocuments();
+    })
+    .then(function() {
       return db.tempCollection.updateRaw({_current: 1, a: 1}, {$set: {b: 4}}, {multi: true});
     })
     .then(function(result) {
       pMongoResult = result;
+      // need to double the number modified to match tpmongo (which also must update the current doc)
+      pMongoResult.nModified *= 2;
     })
     .catch(function(err) {
       console.log('Error: ');
       console.log(err);
     })
-    .finally(function() {
+    .then(function() {
       should.deepEqual(tpMongoResult, pMongoResult);
     });
   });
 
-it('api consistency - remove', function () {
+  it('api consistency - remove', function () {
     var tpMongoResult = {};
     var pMongoResult = {};
 
@@ -473,7 +549,7 @@ it('api consistency - remove', function () {
       console.log('Error: ');
       console.log(err);
     })
-    .finally(function() {
+    .then(function() {
       should.deepEqual(tpMongoResult, pMongoResult);
     });
   });
@@ -481,7 +557,7 @@ it('api consistency - remove', function () {
   it('initialize works', function () {
     var docCount = 0;
     var initializedCount = 0;
-    var initializationComplete = false;
+    // var initializationComplete = false;
     return massInsertTest()
     .then(function() {
       return db.tempCollection.countRaw({});
@@ -489,7 +565,7 @@ it('api consistency - remove', function () {
     .then(function(theCount) {
       docCount = theCount;
     })
-    .then(function(theCount) {
+    .then(function() {
       return db.tempCollection.countRaw({_rId: {$exists: true}});
     })
     .then(function(alreadyInitializedCount) {
@@ -503,7 +579,7 @@ it('api consistency - remove', function () {
       console.log('Error: ');
       console.log(err);
     })
-    .finally(function() {
+    .then(function() {
       docCount.should.be.exactly(massInsertCount);
     });
   });
@@ -522,7 +598,7 @@ it('api consistency - remove', function () {
       console.log('Error: ');
       console.log(err);
     })
-    .finally(function() {
+    .then(function() {
       docCount.should.be.exactly(3);
     });
   });
@@ -541,7 +617,7 @@ it('api consistency - remove', function () {
       console.log('Error: ');
       console.log(err);
     })
-    .finally(function() {
+    .then(function() {
       docCount.should.be.exactly(3);
     });
   });
@@ -562,7 +638,7 @@ it('api consistency - remove', function () {
       console.log('Error: ');
       console.log(err);
     })
-    .finally(function() {
+    .then(function() {
       docCount.should.be.exactly(3);
     });
   });
@@ -574,14 +650,14 @@ it('api consistency - remove', function () {
     .then(function() {
       return db.tempCollection.findByDate({a: 1}, new Date())
     })
-    .then(function(findResult) {
+    .then(function(/* findResult */) {
       actionWorked = true;
     })
     .catch(function(err) {
       console.log('Error: ');
       console.log(err);
     })
-    .finally(function() {
+    .then(function() {
       actionWorked.should.equal(true);
     });
   });
@@ -602,7 +678,7 @@ it('api consistency - remove', function () {
       console.log('Error: ');
       console.log(err);
     })
-    .finally(function() {
+    .then(function() {
       actionWorked.should.equal(true);
     });
   });
@@ -614,14 +690,14 @@ it('api consistency - remove', function () {
     .then(function() {
       return db.tempCollection.findOneByDate({a: 1}, new Date())
     })
-    .then(function(findOneResult) {
+    .then(function(/* findOneResult */) {
       actionWorked = true;
     })
     .catch(function(err) {
       console.log('Error: ');
       console.log(err);
     })
-    .finally(function() {
+    .then(function() {
       actionWorked.should.equal(true);
     });
   });
@@ -634,14 +710,14 @@ it('api consistency - remove', function () {
     .then(function() {
       return db.tempCollection.findAndModify({query: {a: 1}, update: {$set: {anotherProperty: 2}}});
     })
-    .then(function(foundDocuments) {
+    .then(function(/* foundDocuments */) {
       actionWorked = true;
     })
     .catch(function(err) {
       console.log('Error: ');
       console.log(err);
     })
-    .finally(function() {
+    .then(function() {
       actionWorked.should.equal(true);
     });
   });
@@ -653,14 +729,14 @@ it('api consistency - remove', function () {
     .then(function() {
       return db.tempCollection.findAndModify({query: {x: 1}, upsert: true, update: {$set: {x: 1, anotherProperty: 2}}});
     })
-    .then(function(foundDocuments) {
+    .then(function(/* foundDocuments */) {
       actionWorked = true;
     })
     .catch(function(err) {
       console.log('Error: ');
       console.log(err);
     })
-    .finally(function() {
+    .then(function() {
       actionWorked.should.equal(true);
     });
   });
@@ -672,14 +748,14 @@ it('api consistency - remove', function () {
     .then(function() {
       return db.tempCollection.update({a: 1}, {$set: {c: 4}}, {multi: true});
     })
-    .then(function(updateResult) {
+    .then(function(/* updateResult */) {
       actionWorked = true;
     })
     .catch(function(err) {
       console.log('Error: ');
       console.log(err);
     })
-    .finally(function() {
+    .then(function() {
       actionWorked.should.equal(true);
     });
   });
@@ -691,14 +767,14 @@ it('api consistency - remove', function () {
     .then(function() {
       return db.tempCollection.update({a: 1}, {$set: {c: 4}}, {multi: true, upsert: true});
     })
-    .then(function(updateResult) {
+    .then(function(/* updateResult */) {
       actionWorked = true;
     })
     .catch(function(err) {
       console.log('Error: ');
       console.log(err);
     })
-    .finally(function() {
+    .then(function() {
       actionWorked.should.equal(true);
     });
   });
@@ -743,14 +819,14 @@ it('api consistency - remove', function () {
     .then(function() {
       return db.tempCollection.remove({a: 1});
     })
-    .then(function(saveResult) {
+    .then(function(/* saveResult */) {
       actionWorked = true;
     })
     .catch(function(err) {
       console.log('Error: ');
       console.log(err);
     })
-    .finally(function() {
+    .then(function() {
       actionWorked.should.equal(true);
     });
   });
@@ -760,10 +836,10 @@ it('api consistency - remove', function () {
 
     return setupDocuments()
     .then(function() {
-      var returnObject = {success: true, errors: []};
+      //var returnObject = {success: true, errors: []};
 
       var tempValue = new Date();
-      var query = {'tempProperty': tempValue};
+      //var query = {'tempProperty': tempValue};
       var queryMultiple = {'sameValue': 1};
       var update = {$set: {'anotherProperty': 1}};
       var numberOfUpdatesToTest = 5;
@@ -775,7 +851,7 @@ it('api consistency - remove', function () {
         insertPromises.push(db.tempCollection.insert({'tempProperty': tempValue, 'sameValue': 3, doc2val:2}, {writeConcern: 'majority'}));
       }
 
-      return Q.all(insertPromises)
+      return Promise.all(insertPromises)
       .then(function() {
         var updatePromises = [];
         for(var i = 0; i < numberOfUpdatesToTest; i++) {
@@ -783,17 +859,17 @@ it('api consistency - remove', function () {
           updatePromises.push(db.tempCollection.findAndModify({query: {a: 1}, update: {$set: {'anotherProperty': 2}}}));
         }
 
-        return Q.all(updatePromises);
+        return Promise.all(updatePromises);
       });
     })
-    .then(function(saveResult) {
+    .then(function(/* saveResult */) {
       actionWorked = true;
     })
     .catch(function(err) {
       console.log('Error: ');
       console.log(err);
     })
-    .finally(function() {
+    .then(function() {
       actionWorked.should.equal(true);
     });
   });

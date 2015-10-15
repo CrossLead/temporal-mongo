@@ -13,10 +13,14 @@ $ npm install --save tpmongo
 ## Usage
 
 ```javascript
-var tpmongo = require('tpmongo');
-tpmongo(); // "awesome"
-```
+import tpmongo from 'tpmongo';
 
+const maxDate = new Date('2099-07-21 15:16:00.599Z'),
+      mongoCollections = ['tempCollection'],
+      db = tpmongo('localhost/tpmongoTestDb', mongoCollections, { _maxDate: maxDate });
+
+db.tempCollection.temporalize();
+```
 
 ## API
 

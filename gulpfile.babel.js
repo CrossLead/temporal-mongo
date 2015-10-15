@@ -3,6 +3,8 @@ import babel from 'gulp-babel';
 import loadPlugins from 'gulp-load-plugins';
 import sourcemaps from 'gulp-sourcemaps';
 import eslint from 'gulp-eslint';
+// import istanbul from 'gulp-babel-istanbul';
+// import mergeStream from 'merge-stream';
 
 const plugins = loadPlugins();
 
@@ -40,21 +42,22 @@ gulp.task('eslint', () => {
     .pipe(eslint.format());
 });
 
-gulp.task('istanbul', ['compile'], cb => {
-  gulp.src(paths.source)
-    .pipe(plugins.istanbul()) // Covering files
-    .pipe(plugins.istanbul.hookRequire()) // Force `require` to return covered files
-    .on('finish', function () {
-      gulp.src(paths.tests)
-        .pipe(plugins.plumber(plumberConf))
-        .pipe(plugins.mocha({timeout: 10000}))
-        .pipe(plugins.istanbul.writeReports()) // Creating the reports after tests runned
-        .on('finish', function() {
-          process.chdir(__dirname);
-          cb();
-        });
-    });
-});
+// gulp.task('istanbul', ['compile'], cb => {
+//   // mergeStream(
+//   //   gulp.src(paths.source),
+//   //   gulp.src(paths.tests)
+//   //     .pipe(babel())
+//   // )
+//   // .pipe(istanbul()) // Covering files
+//   // .pipe(istanbul.hookRequire()) // Force `require` to return covered files
+//   // .on('finish', function () {
+//   gulp.src(paths.tests)
+//     //.pipe(plugins.plumber(plumberConf))
+//     .pipe(plugins.mocha({timeout: 10000}))
+//     //.pipe(istanbul.writeReports()) // Creating the reports after tests runned
+//     .on('finish', cb);
+//   //});
+// });
 
 gulp.task('bump', ['test'], () => {
   var bumpType = plugins.util.env.type || 'patch'; // major.minor.patch
@@ -74,7 +77,9 @@ gulp.on('stop', function () {
   });
 });
 
-gulp.task('test', ['eslint', 'istanbul']);
+gulp.task('test', ['compile', 'eslint'], () => gulp
+  .src(paths.tests)
+  .pipe(plugins.mocha()));
 
 gulp.task('release', ['bump']);
 
