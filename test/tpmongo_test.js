@@ -374,7 +374,7 @@ describe('tpmongo', function() {
       return db.tempCollection.update({a: 1}, {$set: {b: 4}}, {multi: true});
     })
     .then(function() {
-      return db.tempCollection.aggregate({$group: {_id: '$a', total: {$sum: '$b'}}});
+      return db.tempCollection.aggregate([{$group: {_id: '$a', total: {$sum: '$b'}}}]);
     })
     .then(function(result) {
       for(var resultIter = 0; resultIter < result.length; resultIter++) {
@@ -398,7 +398,7 @@ describe('tpmongo', function() {
       return db.tempCollection.update({a: 1}, {$set: {b: 4}}, {multi: true});
     })
     .then(function() {
-      return db.tempCollection.aggregateByDate(testMiddleDate, {$group: {_id: '$a', total: {$sum: '$b'}}});
+      return db.tempCollection.aggregateByDate(testMiddleDate, [{$group: {_id: '$a', total: {$sum: '$b'}}}]);
     })
     .then(function(result) {
       for(var resultIter = 0; resultIter < result.length; resultIter++) {
