@@ -1,7 +1,7 @@
 {
   "name": "tpmongo",
   "description": "temporal-mongo",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "homepage": "https://github.com/CrossLead/temporal-mongo",
   "bugs": "https://github.com/CrossLead/temporal-mongo/issues",
   "license": "Apache 2",
@@ -16,7 +16,7 @@
   "keywords": [],
   "dependencies": {
     "babel-runtime": "^5.8.25",
-    "promised-mongo": "^1.2.0"
+    "promised-mongo": "git+https://github.com/CrossLead/promised-mongo.git#ec25ae4219f8bb7a064b19353627545fcbbe759f"
   },
   "devDependencies": {
     "lodash": "^3.10.0",
