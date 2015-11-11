@@ -129,7 +129,7 @@ describe('tpmongo', function() {
     should.exist(tpmongo.ObjectId);
   });
 
-  it('temporlize works', function () {
+  it('temporalize works', function () {
     var actionWorked = false;
     return massInsertTest()
     .then(function() {
@@ -147,7 +147,7 @@ describe('tpmongo', function() {
     });
   });
 
-  it('retemporlize should not work', function () {
+  it('retemporalize should not work', function () {
     var actionWorked = false;
     return massInsertTest()
     .then(function() {
