@@ -88,15 +88,18 @@ describe('tpmongo', function() {
 
   var db = tpmongo('localhost/tpmongoTestDb', mongoCollections, { _maxDate: maxDate });
 
-  var testObjectId = db.ObjectId('5609b87d282d4aac260fcb9f');
+  var doc1Id = db.ObjectId('55addf649ce171641a34281d');
+  var doc2Id = db.ObjectId('55addf649ce171641a34281e');
+  var doc3Id = db.ObjectId('5609b87d282d4aac260fcb9f');
+
   var testStartDate = new Date('2015-07-21 15:16:00.599Z');
   var testEndDate = maxDate;
   var testMiddleDate = new Date('2015-07-22 15:16:00.599Z');
 
   var setupDocuments = function() {
-    var doc1 = {a: 1, c:1, _current: 1, _id: db.ObjectId('55addf649ce171641a34281d'), _rId: db.ObjectId('55addf649ce171641a34281d'), _startDate: testStartDate, _endDate: testEndDate};
-    var doc2 = {a: 1, b:2, c:2, _current: 1, _id: db.ObjectId('55addf649ce171641a34281e'), _rId: db.ObjectId('55addf649ce171641a34281e'), _startDate: testStartDate, _endDate: testEndDate};
-    var doc3 = {a: 1, b:3, c:2, _current: 1, _id: db.ObjectId('5609b87d282d4aac260fcb9f'), _rId: db.ObjectId('5609b87d282d4aac260fcb9f'), _startDate: testStartDate, _endDate: testEndDate};
+    var doc1 = {a: 1, c:1, _current: 1, _id: doc1Id, _rId: doc1Id, _startDate: testStartDate, _endDate: testEndDate};
+    var doc2 = {a: 1, b:2, c:2, _current: 1, _id: doc2Id, _rId: doc2Id, _startDate: testStartDate, _endDate: testEndDate};
+    var doc3 = {a: 1, b:3, c:2, _current: 1, _id: doc3Id, _rId: doc3Id, _startDate: testStartDate, _endDate: testEndDate};
 
     return db.tempCollection.removeRaw({})
     .then(function() {
@@ -704,22 +707,41 @@ describe('tpmongo', function() {
 
 
   it('findAndModify (std) should work', function () {
-    var actionWorked = false;
-
     return setupDocuments()
-    .then(function() {
-      return db.tempCollection.findAndModify({query: {a: 1}, update: {$set: {anotherProperty: 2}}});
-    })
-    .then(function(/* foundDocuments */) {
-      actionWorked = true;
-    })
-    .catch(function(err) {
-      console.log('Error: ');
-      console.log(err);
-    })
-    .then(function() {
-      actionWorked.should.equal(true);
-    });
+      .then(function() {
+        return db.tempCollection.findAndModify({
+          query: {_rId: doc1Id},
+          update: {$set: {anotherProperty: 2}},
+          new: true
+        });
+      })
+      .then(function(result) {
+        result.value.anotherProperty.should.equal(2);
+      })
+      .catch(function(err) {
+        console.log('Error: ');
+        console.log(err);
+      });
+  });
+
+  it('findAndModify (std) replacing entire doc should work', function () {
+    return setupDocuments()
+      .then(function() {
+        return db.tempCollection.findAndModify({
+          query: {_rId: doc1Id},
+          update: { onlyProp: 'onlyVal' },
+          new: true
+        });
+      })
+      .then(function(result) {
+        doc1Id.equals(result.value._rId).should.equal(true);
+        result.value.onlyProp.should.equal('onlyVal');
+        should.not.exist(result.value.a);
+      })
+      .catch(function(err) {
+        console.log('Error: ');
+        console.log(err);
+      });
   });
 
   it('findAndModify (upsert) should work', function () {
@@ -782,10 +804,12 @@ describe('tpmongo', function() {
   it('save with _rId should work', function () {
     return setupDocuments()
       .then(function() {
-        return db.tempCollection.save({_rId: testObjectId, d: 4});
+        return db.tempCollection.save({_rId: doc3Id, d: 4});
       })
       .then(function(saveResult) {
         should.exist(saveResult._rId);
+        should(saveResult._rId.equals(doc3Id)).equal(true);
+        should.not.exist(saveResult.a);
         saveResult.d.should.equal(4);
       });
   });
