@@ -3,6 +3,7 @@ var pmongo = require('promised-mongo');
 var should = require('should');
 var _ = require('lodash');
 var massInsertCount = 1000;
+var Cursor = require('promised-mongo/dist/lib/Cursor');
 
 /**
  * Pause for <ms>
@@ -392,6 +393,30 @@ describe('tpmongo', function() {
       aggregateTotal.should.be.exactly(12);
     });
   });
+
+
+
+  it('aggregateCursor should return cursor', function () {
+    return setupDocuments()
+    .then(function() {
+      return db.tempCollection.update({a: 1}, {$set: {b: 4}}, {multi: true});
+    })
+    .then(function() {
+      var c = db.tempCollection.aggregateCursor([{$group: {_id: '$a', total: {$sum: '$b'}}}]);
+      should.deepEqual(c.constructor, Cursor);
+      return c.next()
+      .then(function (data) {
+        should.deepEqual(data, { _id: 1, total: 12 });
+      });
+    })
+    .catch(function(err) {
+      console.log('Error: ');
+      console.log(err);
+    });
+  });
+
+
+
 
   it('aggregate by date should work', function () {
     var aggregateTotal = 0;
