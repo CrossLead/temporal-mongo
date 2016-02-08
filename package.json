@@ -16,7 +16,7 @@
   "keywords": [],
   "dependencies": {
     "babel-runtime": "^5.8.25",
-    "promised-mongo": "git+https://github.com/CrossLead/promised-mongo.git#ec25ae4219f8bb7a064b19353627545fcbbe759f"
+    "promised-mongo": "git+https://github.com/CrossLead/promised-mongo.git#a736a8b0ab9597c5534fedd8a748f7579c835d67"
   },
   "devDependencies": {
     "lodash": "^3.10.0",
